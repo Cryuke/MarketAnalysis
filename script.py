@@ -1,50 +1,64 @@
 import requests
-from bs4 import BeautifulSoup
 import csv
+from bs4 import BeautifulSoup
 
-# URL of the website to scrape
-URL = 'http://books.toscrape.com/'
+def extract_strings(elements):
+    items = []
+    for e in elements:
+        items.append(e.string.strip())
+    return items
 
-# Function to fetch the webpage
-def fetch_page(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
 
-# Function to parse the HTML and extract book information
-def parse_books(page_content):
-    soup = BeautifulSoup(page_content, 'html.parser')
-    books = []
-    for article in soup.find_all('article', class_='product_pod'):
-        title = article.h3.a['title']
-        price = article.find('p', class_='price_color').text
-        books.append({'title': title, 'price': price})
-    return books
+def save_data(file_name, headers, row):
+    with open(file_name, 'w', newline='') as csvfile:
+        writer = csv.writer(csvfile, delimiter=',', quotechar='"', quoting=csv.QUOTE_ALL)
+        writer.writerow(headers)
+        for row in row:
+        
+            writer.writerow(row)
 
-# Function to save the book information to a CSV file
-def save_to_csv(books, filename='books.csv'):
-    keys = books[0].keys()
-    with open(filename, 'w', newline='', encoding='utf-8') as output_file:
-        dict_writer = csv.DictWriter(output_file, fieldnames=keys)
-        dict_writer.writeheader()
-        dict_writer.writerows(books)
+
+
+def pulling_single_page_details(url):
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, 'html.parser')
+    product_page_url = url
+
+    upc = soup.select_one('tr:nth-child(1)').get_text(strip=True)
+    title = soup.select_one('#content_inner h1').get_text(strip=True)
+    price_excl_tax= soup.select_one ('tr:nth-child(3) > td').get_text(strip=True)
+    price_incl_tax= soup.select_one ('tr:nth-child(4) > td' ).get_text(strip=True)
+    quantity_available= soup.select_one ('tr:nth-child(6) > td').get_text(strip=True)
+    product_description= soup.select_one ('article > p').get_text(strip=True).replace(',', ';')
+    category= soup.select_one ('li:nth-child(3) > a').get_text(strip=True)
+    review_rating= soup.select_one ('.star-rating')['class'][1]
+    image_tag = soup.select_one('img')['src']
+
+
+    print("price_excl_tax", price_excl_tax)
+    print("price_incld_tax", price_incl_tax)
+    print("quantity_available", quantity_available)
+    print("category", category)
+    print("review_rating", review_rating)
+    print("image_tag", image_tag)
+
+    row = [product_page_url, upc, title, price_excl_tax, price_incl_tax, 
+        quantity_available, product_description, category, review_rating, image_tag]
+    return row
+
 
 def main():
-    # Fetch the webpage
-    page_content = fetch_page(URL)
-    if page_content:
-        # Parse the HTML and extract book information
-        books = parse_books(page_content)
-        # Save the book information to a CSV file
-        save_to_csv(books)
-        print(f'Successfully saved {len(books)} books to books.csv')
-        # Print the extracted data to the console
-        for book in books:
-            print(f"Title: {book['title']}, Price: {book['price']}")
-    else:
-        print('Failed to retrieve the page')
 
-if __name__ == '__main__':
+    url = "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
+
+    headers = [
+        "product_page_url", "universal_product_code", "book_title", "price_excl_tax", 
+        "price_incl_tax", "quantity_available", "product_description", "category", 
+        "review_rating", "image_url"
+    ]
+    row = pulling_single_page_details(url)
+    rows = [row]
+    save_data("books_data.csv", headers, rows)
+
+if __name__ == "__main__":
     main()
