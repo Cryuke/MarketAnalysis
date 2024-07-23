@@ -17,8 +17,6 @@ def save_data(file_name, headers, row):
         
             writer.writerow(row)
 
-
-
 def pulling_single_page_details(url):
     page = requests.get(url)
     soup = BeautifulSoup(page.content, 'html.parser')
@@ -26,14 +24,13 @@ def pulling_single_page_details(url):
 
     upc = soup.select_one('tr:nth-child(1)').get_text(strip=True)
     title = soup.select_one('#content_inner h1').get_text(strip=True)
-    price_excl_tax= soup.select_one ('tr:nth-child(3) > td').get_text(strip=True)
-    price_incl_tax= soup.select_one ('tr:nth-child(4) > td' ).get_text(strip=True)
-    quantity_available= soup.select_one ('tr:nth-child(6) > td').get_text(strip=True)
-    product_description= soup.select_one ('article > p').get_text(strip=True).replace(',', ';')
-    category= soup.select_one ('li:nth-child(3) > a').get_text(strip=True)
-    review_rating= soup.select_one ('.star-rating')['class'][1]
+    price_excl_tax = soup.select_one ('tr:nth-child(3) > td').get_text(strip=True)
+    price_incl_tax = soup.select_one ('tr:nth-child(4) > td' ).get_text(strip=True)
+    quantity_available = soup.select_one ('tr:nth-child(6) > td').get_text(strip=True)
+    product_description = soup.select_one ('article > p').get_text(strip=True).replace(',', ';')
+    category = soup.select_one ('li:nth-child(3) > a').get_text(strip=True)
+    review_rating = soup.select_one ('.star-rating')['class'][1]
     image_tag = soup.select_one('img')['src']
-
 
     print("price_excl_tax", price_excl_tax)
     print("price_incld_tax", price_incl_tax)
@@ -45,8 +42,17 @@ def pulling_single_page_details(url):
     row = [product_page_url, upc, title, price_excl_tax, price_incl_tax, 
         quantity_available, product_description, category, review_rating, image_tag]
     return row
-
-
+def pulling_from_catogoery(url):
+    #starting catogoery url: 
+    # https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html
+    # https://books.toscrape.com/catalogue/category/books/sequential-art_5/page-2.html
+    # for each catogoery page until there is no next button
+    #  Find each book's url in the catogoery page
+    #   Loop through each url in the catogoery
+    #    open each url for a book 
+    #       pull single page details
+    #  return all rows of product details
+    # for later a single CVS for each catogoery
 def main():
 
     url = "https://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html"
